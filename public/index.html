@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipes</title>
+  <script src="https://unpkg.com/htmx.org@1.8.4"></script>
+</head>
+
+<body>
+  <h1>Recipes</h1>
+  <div id="recipes-container">
+    <div hx-get="/api/recipes" hx-trigger="load" hx-target="#recipes-container" hx-swap="innerHTML">
+      Loading recipes...
+    </div>
+  </div>
+
+  <div id="pagination">
+    <button hx-get="/api/recipes?page={previous_page}" hx-target="#recipes-container" hx-swap="innerHTML"
+      :disabled="previous_page == null">Previous</button>
+
+    <button hx-get="/api/recipes?page={next_page}" hx-target="#recipes-container" hx-swap="innerHTML"
+      :disabled="next_page == null">Next</button>
+  </div>
+
+  <template id="recipe-template">
+    <div class="recipe">
+      <h2>{title}</h2>
+      <p><strong>Recipe ID:</strong> {recipe_id}</p>
+      <p><strong>Owner:</strong> {recipe_owner}</p>
+      <p><strong>Content:</strong> {content}</p>
+      <p><strong>Created At:</strong> {created_at}</p>
+    </div>
+    <hr />
+  </template>
+
+  <script>
+    document.addEventListener("htmx:afterRequest", (event) => {
+      const recipesContainer = document.getElementById("recipes-container");
+      recipesContainer.innerHTML = "";
+
+      // Parse the response if needed and check if it's an array
+      let recipes;
+      try {
+        recipes = typeof event.detail.xhr.response === "string"
+          ? JSON.parse(event.detail.xhr.response)
+          : event.detail.xhr.response;
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+        recipesContainer.innerHTML = "<p>Error loading recipes.</p>";
+        return;
+      }
+
+      if (!Array.isArray(recipes)) {
+        recipesContainer.innerHTML = "<p>No recipes available.</p>";
+        return;
+      }
+
+      recipesContainer.innerHTML = recipes
+        .map(recipe => {
+          const template = document.getElementById("recipe-template").innerHTML;
+          return template
+            .replace("{title}", recipe.title)
+            .replace("{recipe_id}", recipe.recipe_id)
+            .replace("{recipe_owner}", recipe.recipe_owner)
+            .replace("{content}", recipe.content)
+            .replace("{created_at}", new Date(recipe.created_at).toLocaleString());
+        })
+        .join("");
+    });
+  </script>
+</body>
+
+</html>
