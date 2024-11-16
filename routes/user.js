@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { nanoid } from "nanoid";
 import { createUser, getUserByUsername } from "../queries.js";
+import authenticateToken from "../middleware/token.js";
 
 const usersRouter = express.Router();
 
@@ -27,10 +28,18 @@ usersRouter.post("/", async (req, res) => {
 
   const newUser = createUser.get(userId, username, hashedPassword, Date.now());
 
+  // Generate JWT token
+  const token = jwt.sign(
+    { userId: newUser.user_id, username: newUser.username },
+    JWT_SECRET,
+    { expiresIn: "24h" }
+  );
+
   return res.status(201).json({
     userId: newUser.user_id,
     username: newUser.username,
     joined: new Date(newUser.created_at).toISOString(),
+    token,
   });
 });
 
@@ -55,10 +64,18 @@ usersRouter.post("/session", async (req, res) => {
     return res.status(400).json({ error: "Incorrect Password" });
   }
 
-  // Login Implementation
-  return res
-    .status(200)
-    .json({ message: "Login Success", user: registeredUser.username });
+  // Generate JWT token
+  const token = jwt.sign(
+    { userId: registeredUser.user_id, username: registeredUser.username },
+    JWT_SECRET,
+    { expiresIn: "24h" }
+  );
+
+  return res.status(200).json({
+    message: "Login Success",
+    user: registeredUser.username,
+    token,
+  });
 });
 
 export default usersRouter;
