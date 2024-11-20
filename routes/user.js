@@ -2,7 +2,9 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { nanoid } from "nanoid";
 import { createUser, getUserByUsername } from "../queries.js";
+import jwt from "jsonwebtoken";
 import authenticateToken from "../middleware/token.js";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const usersRouter = express.Router();
 
@@ -75,6 +77,15 @@ usersRouter.post("/session", async (req, res) => {
     message: "Login Success",
     user: registeredUser.username,
     token,
+  });
+});
+
+// Example protected route
+usersRouter.get("/profile", authenticateToken, (req, res) => {
+  // req.user contains the decoded JWT payload
+  return res.json({
+    message: "Protected route accessed successfully",
+    user: req.user,
   });
 });
 

@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Middleware to verify JWT
 const authenticateToken = (req, res, next) => {
